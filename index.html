@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Classroom Feed</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #e6ecf0; color: #14171a; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #1DA1F2; }
+        #feed { max-width: 600px; margin: auto; }
+        .tweet { background-color: #fff; border: 1px solid #ccd6dd; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); word-wrap: break-word; }
+        .tweet-author { font-weight: bold; color: #14171a; }
+        .tweet-time { font-size: 0.8em; color: #657786; margin-left: 10px; }
+        .tweet-text { margin-top: 5px; font-size: 1.1em; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <h1>#OurClassFeed 🐦</h1>
+    <p style="text-align: center;">Submit a new post using the <a href="https://forms.gle/XUfpuDErFQWycAkH8" target="_blank">Google Form</a>!</p>
+    <div id="feed">Loading tweets...</div>
+
+    <script>
+        // --- YOUR PUBLISHED GOOGLE SHEET LINK IS NOW INCLUDED ---
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vToRK10STZKifWjqoHr7ASSXWOTL9aV_1aSzUHuTmL9nWoGIyFFNXT47HM8PWqBxarasTytvbd_Qb76/pub?gid=91273334&single=true&output=csv';
+
+        window.addEventListener('load', function() {
+            fetchTweets();
+            // Refreshes the feed every 30 seconds to check for new posts
+            setInterval(fetchTweets, 30000); 
+        });
+
+        function fetchTweets() {
+            // Adding a timestamp to the URL prevents the browser from using a cached (old) version of the file
+            const urlWithCacheBuster = sheetUrl + '&t=' + new Date().getTime();
+
+            fetch(urlWithCacheBuster)
+                .then(response => response.text())
+                .then(data => {
+                    const feedContainer = document.getElementById('feed');
+                    feedContainer.innerHTML = ''; // Clear old tweets before loading new ones
+                    const rows = data.split('\n').slice(1).reverse(); // Split by new line, skip the header row, and reverse so newest is first
+
+                    rows.forEach(row => {
+                        const columns = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []; // Handles commas inside tweets
+                        if (columns.length >= 3) {
+                            const timestamp = columns[0].replace(/"/g, '');
+                            const author = columns[1].replace(/"/g, '');
+                            const text = columns[2].replace(/"/g, '');
+
+                            if (author && text) { // Only display if there is an author and text
+                                const tweetElement = document.createElement('div');
+                                tweetElement.className = 'tweet';
+                                tweetElement.innerHTML = `
+                                    <div class="tweet-author">${author} <span class="tweet-time">${new Date(timestamp).toLocaleString()}</span></div>
+                                    <div class="tweet-text">${text}</div>
+                                `;
+                                feedContainer.appendChild(tweetElement);
+                            }
+                        }
+                    });
+                     if (feedContainer.innerHTML === '') {
+                        feedContainer.innerHTML = 'No tweets yet. Be the first to post!';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching tweets:', error);
+                    document.getElementById('feed').innerHTML = 'Could not load tweets. Make sure the Google Sheet URL is correct and published as a .csv file.';
+                });
+        }
+    </script>
+
+</body>
+</html>
