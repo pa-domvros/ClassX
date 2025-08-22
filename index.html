@@ -21,13 +21,13 @@
     <div id="feed">Loading tweets...</div>
 
     <script>
-        // --- YOUR PUBLISHED GOOGLE SHEET LINK IS NOW INCLUDED ---
+        // --- YOUR PUBLISHED GOOGLE SHEET LINK IS INCLUDED ---
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vToRK10STZKifWjqoHr7ASSXWOTL9aV_1aSzUHuTmL9nWoGIyFFNXT47HM8PWqBxarasTytvbd_Qb76/pub?gid=91273334&single=true&output=csv';
 
         window.addEventListener('load', function() {
             fetchTweets();
             // Refreshes the feed every 30 seconds to check for new posts
-            setInterval(fetchTweets, 30000); 
+            setInterval(fetchTweets, 30000);
         });
 
         function fetchTweets() {
@@ -39,7 +39,11 @@
                 .then(data => {
                     const feedContainer = document.getElementById('feed');
                     feedContainer.innerHTML = ''; // Clear old tweets before loading new ones
-                    const rows = data.split('\n').slice(1).reverse(); // Split by new line, skip the header row, and reverse so newest is first
+
+                    const rows = data.split('\n')
+                                     .filter(row => row.trim() !== '') // This line removes any blank rows from the data
+                                     .slice(1)                         // Remove the header row
+                                     .reverse();                        // Show newest first
 
                     rows.forEach(row => {
                         const columns = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || []; // Handles commas inside tweets
@@ -59,6 +63,7 @@
                             }
                         }
                     });
+
                      if (feedContainer.innerHTML === '') {
                         feedContainer.innerHTML = 'No tweets yet. Be the first to post!';
                     }
