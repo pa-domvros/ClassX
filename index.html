@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Classroom Feed / Η Τροφοδοσία της Τάξης μας</title>
+    <title>Our Class Feed </title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -135,55 +135,60 @@
             color: #8B4513;
         }
         
-        /* Print-specific styles */
+        /* Print styles */
         @media print {
             body * {
                 visibility: hidden;
             }
-            #printable-feed, #printable-feed * {
+            #print-section, #print-section * {
                 visibility: visible;
             }
-            #printable-feed {
+            #print-section {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
                 padding: 20px;
+                background: white;
+                color: black;
             }
             .print-header {
                 text-align: center;
                 margin-bottom: 20px;
-                border-bottom: 2px solid #DAA520;
                 padding-bottom: 10px;
+                border-bottom: 1px solid #ccc;
             }
-            .print-tweet {
+            .print-post {
                 margin-bottom: 15px;
                 padding: 10px;
-                border-bottom: 1px solid #EEE;
+                border-bottom: 1px solid #eee;
             }
-            .print-tweet-author {
+            .print-author {
                 font-weight: bold;
-                color: #5D4037;
+                color: #333;
             }
-            .print-tweet-time {
+            .print-time {
                 font-size: 0.8em;
-                color: #8B4513;
+                color: #666;
                 margin-left: 10px;
             }
-            .print-tweet-text {
+            .print-text {
                 margin-top: 5px;
             }
             .print-topic {
                 text-align: center;
                 font-style: italic;
                 margin-bottom: 20px;
-                color: #8B4513;
+                color: #444;
             }
             .print-footer {
                 text-align: center;
                 margin-top: 30px;
                 font-size: 0.8em;
-                color: #6D4C41;
+                color: #666;
+            }
+            .no-print {
+                display: none;
             }
         }
     </style>
@@ -208,18 +213,18 @@
         <button onclick="setTopic()" id="setTopicBtn">Set Topic</button>
         <button onclick="clearWall()" id="clearWallBtn">Clear Wall</button>
         <button onclick="showResetCount()" id="resetCountBtn">Show Reset Count</button>
+        <button onclick="clearAllData()" id="clearAllBtn">Clear All Data</button>
         <button onclick="printToPDF()" id="printBtn">Print to PDF</button>
     </div>
 
     <div class="debug-info">
-        <p><strong>Debug Information:</strong> The Clear Wall function now works by storing a reset timestamp and only displaying posts created after that time.</p>
-        <p>Last Reset: <span id="lastResetTime">Never</span></p>
+        <p><strong>Debug Information:</strong> Last Reset: <span id="lastResetTime">Never</span></p>
     </div>
 
     <footer id="footer">✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨</footer>
-    
+
     <!-- Hidden printable content -->
-    <div id="printable-feed" style="display: none;"></div>
+    <div id="print-section" style="display: none;"></div>
 
     <script>
         // Language configuration
@@ -233,6 +238,7 @@
                 setTopic: "Set Topic",
                 clearWall: "Clear Wall",
                 resetCount: "Show Reset Count",
+                clearAll: "Clear All Data",
                 printPDF: "Print to PDF",
                 footer: "✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨",
                 passwordPrompt: "Please enter the teacher password:",
@@ -242,6 +248,7 @@
                 wallCleared: "Wall cleared! New posts will now appear.",
                 resetCountPrompt: "The wall has been reset",
                 times: "time(s)",
+                allDataCleared: "All data cleared successfully!",
                 lastReset: "Last Reset: ",
                 printTitle: "Classroom Feed",
                 printDate: "Print Date: ",
@@ -253,19 +260,21 @@
                 topic: "Σημερινό Θέμα: ",
                 submitText: 'Υποβάλετε μια νέα δημοσίευση χρησιμοποιώντας την <a href="https://forms.gle/XUfpuDErFQWycAkH8" target="_blank">Φόρμα Google</a> ή σαρώστε τον κωδικό QR!',
                 loading: "Φόρτωση δημοσιεύσεων...",
-                noPosts: "Δεν υπάρχουν ακόμη δημοσιεύσεις. Γίνετε ο πρώτος που θα δημοσιεύσει!",
+                noPosts: "Δεν υπάρχουν ακόμη δημοσιεύσεις. Γίνετε ο/η πρώτος/η που θα δημοσιεύσει!",
                 setTopic: "Ορισμός Θέματος",
                 clearWall: "Καθαρισμός Τοίχου",
                 resetCount: "Εμφάνιση Αριθμού Επαναφοράς",
+                clearAll: "Εκκαθάριση Όλων",
                 printPDF: "Εκτύπωση σε PDF",
-                footer: "✨✍️ Αναπτύχθηκε από τον Παναγιώτη Δομβρό, Δάσκαλο Αγγλικών και Δράματος, Με την επιφύλαξη παντός δικαιώματος ✍️✨",
-                passwordPrompt: "Παρακαλώ εισάγετε τον κωδικό πρόσβασης του δασκάλου:",
+                footer: "✨✍️ Αναπτύχθηκε από τον Παναγιώτη Δόμβρος, Εκπαιδευτικό Αγγλικής Γλώσσας & Θεατρολόγο. Με την επιφύλαξη παντός δικαιώματος ✍️✨",
+                passwordPrompt: "Παρακαλώ εισάγετε τον κωδικό πρόσβασης του εκπαιδευτικού:",
                 topicPrompt: "Εισάγετε το νέο θέμα συζήτησης:",
                 topicUpdated: "Το θέμα ενημερώθηκε με επιτυχία!",
                 incorrectPassword: "Εσφαλμένος κωδικός πρόσβασης.",
                 wallCleared: "Ο τοίχος καθαρίστηκε! Νέες δημοσιεύσεις θα εμφανιστούν τώρα.",
                 resetCountPrompt: "Ο τοίχος έχει επαναφερθεί",
                 times: "φορά/ές",
+                allDataCleared: "Όλα τα δεδομένα εκκαθαρίστηκαν επιτυχώς!",
                 lastReset: "Τελευταία Επαναφορά: ",
                 printTitle: "Τροφοδοσία Τάξης",
                 printDate: "Ημερομηνία Εκτύπωσης: ",
@@ -307,6 +316,7 @@
             document.getElementById('setTopicBtn').textContent = lang.setTopic;
             document.getElementById('clearWallBtn').textContent = lang.clearWall;
             document.getElementById('resetCountBtn').textContent = lang.resetCount;
+            document.getElementById('clearAllBtn').textContent = lang.clearAll;
             document.getElementById('printBtn').textContent = lang.printPDF;
             document.getElementById('footer').textContent = lang.footer;
             
@@ -360,6 +370,23 @@
             }
         }
         
+        function clearAllData() {
+            const lang = translations[currentLanguage];
+            const input = prompt(lang.passwordPrompt);
+            if (input === password) {
+                localStorage.removeItem('classroomFeedResetTime');
+                localStorage.removeItem('classroomFeedTopic');
+                localStorage.removeItem('classroomFeedResetCount');
+                localStorage.removeItem('classroomFeedLanguage');
+                showNotification(lang.allDataCleared);
+                updateLastResetTime();
+                updateTopicDisplay();
+                fetchTweets();
+            } else if (input !== null) {
+                showNotification(lang.incorrectPassword, true);
+            }
+        }
+        
         function printToPDF() {
             const lang = translations[currentLanguage];
             const input = prompt(lang.passwordPrompt);
@@ -409,46 +436,52 @@
         
         function preparePrintableContent() {
             const lang = translations[currentLanguage];
-            const printableFeed = document.getElementById('printable-feed');
+            const printableSection = document.getElementById('print-section');
             const feed = document.getElementById('feed');
             const topic = document.getElementById('topic').textContent;
             
             // Clear previous content
-            printableFeed.innerHTML = '';
+            printableSection.innerHTML = '';
             
             // Create printable header
             const header = document.createElement('div');
             header.className = 'print-header';
             header.innerHTML = `
-                <h1>${lang.printTitle}</h1>
+                <h1>${lang.printTitle || 'Classroom Feed'}</h1>
                 <div class="print-topic">${topic}</div>
-                <div>${lang.printDate}${new Date().toLocaleDateString()}</div>
+                <div>${lang.printDate || 'Print Date:'} ${new Date().toLocaleDateString()}</div>
             `;
-            printableFeed.appendChild(header);
+            printableSection.appendChild(header);
             
             // Add posts to printable content
             const tweets = feed.querySelectorAll('.tweet');
             if (tweets.length === 0) {
                 const noPosts = document.createElement('div');
-                noPosts.className = 'print-tweet';
+                noPosts.className = 'print-post';
                 noPosts.textContent = lang.noPosts;
-                printableFeed.appendChild(noPosts);
+                printableSection.appendChild(noPosts);
             } else {
                 tweets.forEach(tweet => {
-                    const author = tweet.querySelector('.tweet-author').textContent;
-                    const time = tweet.querySelector('.tweet-time').textContent;
-                    const text = tweet.querySelector('.tweet-text').textContent;
+                    const authorElement = tweet.querySelector('.tweet-author');
+                    const timeElement = tweet.querySelector('.tweet-time');
+                    const textElement = tweet.querySelector('.tweet-text');
                     
-                    const printTweet = document.createElement('div');
-                    printTweet.className = 'print-tweet';
-                    printTweet.innerHTML = `
-                        <div>
-                            <span class="print-tweet-author">${author.split(' ')[0]}</span>
-                            <span class="print-tweet-time">${time}</span>
-                        </div>
-                        <div class="print-tweet-text">${text}</div>
-                    `;
-                    printableFeed.appendChild(printTweet);
+                    if (authorElement && timeElement && textElement) {
+                        const author = authorElement.textContent;
+                        const time = timeElement.textContent;
+                        const text = textElement.textContent;
+                        
+                        const printPost = document.createElement('div');
+                        printPost.className = 'print-post';
+                        printPost.innerHTML = `
+                            <div>
+                                <span class="print-author">${author.split(' ')[0]}</span>
+                                <span class="print-time">${time}</span>
+                            </div>
+                            <div class="print-text">${text}</div>
+                        `;
+                        printableSection.appendChild(printPost);
+                    }
                 });
             }
             
@@ -456,7 +489,7 @@
             const footer = document.createElement('div');
             footer.className = 'print-footer';
             footer.textContent = document.getElementById('footer').textContent;
-            printableFeed.appendChild(footer);
+            printableSection.appendChild(footer);
         }
 
         function fetchTweets() {
