@@ -130,6 +130,8 @@
         function clearWall() {
             const input = prompt("Please enter the teacher password:");
             if (input === password) {
+                // Save the current timestamp to local storage. 
+                // Any tweet older than this will be hidden.
                 localStorage.setItem('classroomFeedResetTime', new Date().toISOString());
                 alert("Wall cleared! New posts will now appear.");
                 fetchTweets();
@@ -143,6 +145,7 @@
             if (input === password) {
                 const newTopic = prompt("Enter the new topic for discussion:");
                 if (newTopic !== null && newTopic.trim() !== "") {
+                    // Save just the custom part of the topic
                     localStorage.setItem('classroomFeedTopic', newTopic);
                     alert("Topic updated successfully!");
                     updateTopicDisplay();
@@ -155,10 +158,12 @@
         function updateTopicDisplay() {
             const topicElement = document.getElementById('topic');
             const savedTopic = localStorage.getItem('classroomFeedTopic');
-            topicElement.textContent = savedTopic || "Today's Topic: Open Discussion";
+            // Always prepend "Today's Topic: " to the custom topic
+            topicElement.textContent = "Today's Topic: " + (savedTopic || "Open Discussion");
         }
 
         function fetchTweets() {
+            // Get the reset time. Any tweet with a timestamp before this will be ignored.
             const resetDate = new Date(localStorage.getItem('classroomFeedResetTime') || '2000-01-01T00:00:00Z');
             const urlWithCacheBuster = sheetUrl + '&t=' + new Date().getTime();
             const feedContainer = document.getElementById('feed');
@@ -177,6 +182,7 @@
                             const timestamp = columns[0].replace(/"/g, '');
                             const parsedDate = parseGoogleTimestamp(timestamp);
 
+                            // The check that makes "Clear Wall" work
                             if (parsedDate > resetDate) {
                                 postCount++;
                                 const author = columns[1].replace(/"/g, '');
