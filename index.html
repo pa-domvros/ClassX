@@ -88,10 +88,24 @@
             font-size: 0.8em; 
             color: #6D4C41; /* Brownish Gray */
         }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
+    <div class="notification" id="notification"></div>
+    
     <h1>#OurClassFeed 🐦</h1>
     
     <h2 id="topic" class="topic">Today's Topic: Open Discussion</h2>
@@ -106,6 +120,7 @@
     <div class="teacher-controls">
         <button onclick="setTopic()">Set Topic</button>
         <button onclick="clearWall()">Clear Wall</button>
+        <button onclick="showResetCount()">Show Reset Count</button>
     </div>
 
     <footer>✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨</footer>
@@ -114,12 +129,16 @@
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vToRK10STZKifWjqoHr7ASSXWOTL9aV_1aSzUHuTmL9nWoGIyFFNXT47HM8PWqBxarasTytvbd_Qb76/pub?gid=91273334&single=true&output=csv';
         const password = "teacher";
 
-        // Reliable function to parse Google's M/D/YYYY date format
-        function parseGoogleTimestamp(timestamp) {
-            const parts = timestamp.match(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+):(\d+)/);
-            if (!parts) return new Date(timestamp); // Fallback for other formats
-            // parts[1]=Month, parts[2]=Day, parts[3]=Year, etc. Month is 0-indexed.
-            return new Date(parts[3], parts[1] - 1, parts[2], parts[4], parts[5], parts[6]);
+        // Show notification function
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.backgroundColor = isError ? '#f44336' : '#4CAF50';
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
         }
 
         window.addEventListener('load', function() {
@@ -130,11 +149,21 @@
         function clearWall() {
             const input = prompt("Please enter the teacher password:");
             if (input === password) {
-                // Save the current timestamp to local storage. 
-                // Any tweet older than this will be hidden.
-                localStorage.setItem('classroomFeedResetTime', new Date().toISOString());
-                alert("Wall cleared! New posts will now appear.");
+                // Use a reset counter instead of timestamp
+                const currentResetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
+                localStorage.setItem('classroomFeedResetCount', currentResetCount + 1);
+                showNotification("Wall cleared! New posts will now appear.");
                 fetchTweets();
+            } else if (input !== null) {
+                showNotification("Incorrect password.", true);
+            }
+        }
+        
+        function showResetCount() {
+            const input = prompt("Please enter the teacher password:");
+            if (input === password) {
+                const resetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
+                alert(`The wall has been reset ${resetCount} time(s).`);
             } else if (input !== null) {
                 alert("Incorrect password.");
             }
@@ -147,11 +176,11 @@
                 if (newTopic !== null && newTopic.trim() !== "") {
                     // Save just the custom part of the topic
                     localStorage.setItem('classroomFeedTopic', newTopic);
-                    alert("Topic updated successfully!");
+                    showNotification("Topic updated successfully!");
                     updateTopicDisplay();
                 }
             } else if (input !== null) {
-                alert("Incorrect password.");
+                showNotification("Incorrect password.", true);
             }
         }
 
@@ -163,8 +192,7 @@
         }
 
         function fetchTweets() {
-            // Get the reset time. Any tweet with a timestamp before this will be ignored.
-            const resetDate = new Date(localStorage.getItem('classroomFeedResetTime') || '2000-01-01T00:00:00Z');
+            const resetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
             const urlWithCacheBuster = sheetUrl + '&t=' + new Date().getTime();
             const feedContainer = document.getElementById('feed');
             feedContainer.innerHTML = "Loading tweets...";
@@ -176,27 +204,24 @@
                     const rows = data.split('\n').filter(row => row.trim() !== '').slice(1).reverse();
                     let postCount = 0;
 
+                    // Store the current reset count with each tweet
                     rows.forEach(row => {
                         const columns = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
                         if (columns.length >= 3) {
                             const timestamp = columns[0].replace(/"/g, '');
-                            const parsedDate = parseGoogleTimestamp(timestamp);
+                            const author = columns[1].replace(/"/g, '');
+                            const text = columns[2].replace(/"/g, '');
 
-                            // The check that makes "Clear Wall" work
-                            if (parsedDate > resetDate) {
+                            if (author && text) {
                                 postCount++;
-                                const author = columns[1].replace(/"/g, '');
-                                const text = columns[2].replace(/"/g, '');
-
-                                if (author && text) {
-                                    const tweetElement = document.createElement('div');
-                                    tweetElement.className = 'tweet';
-                                    tweetElement.innerHTML = `
-                                        <div class="tweet-author">${author} <span class="tweet-time">${parsedDate.toLocaleString()}</span></div>
-                                        <div class="tweet-text">${text}</div>
-                                    `;
-                                    feedContainer.appendChild(tweetElement);
-                                }
+                                const tweetElement = document.createElement('div');
+                                tweetElement.className = 'tweet';
+                                tweetElement.setAttribute('data-reset-count', resetCount);
+                                tweetElement.innerHTML = `
+                                    <div class="tweet-author">${author} <span class="tweet-time">${timestamp}</span></div>
+                                    <div class="tweet-text">${text}</div>
+                                `;
+                                feedContainer.appendChild(tweetElement);
                             }
                         }
                     });
