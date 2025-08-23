@@ -125,6 +125,15 @@
         .greek-text {
             font-family: 'Segoe UI', Roboto, sans-serif;
         }
+        .debug-info {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #FDF5E6;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #8B4513;
+        }
     </style>
 </head>
 <body>
@@ -147,6 +156,12 @@
         <button onclick="setTopic()" id="setTopicBtn">Set Topic</button>
         <button onclick="clearWall()" id="clearWallBtn">Clear Wall</button>
         <button onclick="showResetCount()" id="resetCountBtn">Show Reset Count</button>
+        <button onclick="clearAllData()" id="clearAllBtn">Clear All Data</button>
+    </div>
+
+    <div class="debug-info">
+        <p><strong>Debug Information:</strong> The Clear Wall function now works by storing a reset timestamp and only displaying posts created after that time.</p>
+        <p>Last Reset: <span id="lastResetTime">Never</span></p>
     </div>
 
     <footer id="footer">✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨</footer>
@@ -163,6 +178,7 @@
                 setTopic: "Set Topic",
                 clearWall: "Clear Wall",
                 resetCount: "Show Reset Count",
+                clearAll: "Clear All Data",
                 footer: "✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨",
                 passwordPrompt: "Please enter the teacher password:",
                 topicPrompt: "Enter the new topic for discussion:",
@@ -170,7 +186,9 @@
                 incorrectPassword: "Incorrect password.",
                 wallCleared: "Wall cleared! New posts will now appear.",
                 resetCountPrompt: "The wall has been reset",
-                times: "time(s)"
+                times: "time(s)",
+                allDataCleared: "All data cleared successfully!",
+                lastReset: "Last Reset: "
             },
             el: {
                 heading: "#ΗΤάξηΜας 🐦",
@@ -181,6 +199,7 @@
                 setTopic: "Ορισμός Θέματος",
                 clearWall: "Καθαρισμός Τοίχου",
                 resetCount: "Εμφάνιση Αριθμού Επαναφοράς",
+                clearAll: "Εκκαθάριση Όλων",
                 footer: "✨✍️ Αναπτύχθηκε από τον Παναγιώτη Δομβρό, Δάσκαλο Αγγλικών και Δράματος, Με την επιφύλαξη παντός δικαιώματος ✍️✨",
                 passwordPrompt: "Παρακαλώ εισάγετε τον κωδικό πρόσβασης του δασκάλου:",
                 topicPrompt: "Εισάγετε το νέο θέμα συζήτησης:",
@@ -188,7 +207,9 @@
                 incorrectPassword: "Εσφαλμένος κωδικός πρόσβασης.",
                 wallCleared: "Ο τοίχος καθαρίστηκε! Νέες δημοσιεύσεις θα εμφανιστούν τώρα.",
                 resetCountPrompt: "Ο τοίχος έχει επαναφερθεί",
-                times: "φορά/ές"
+                times: "φορά/ές",
+                allDataCleared: "Όλα τα δεδομένα εκκαθαρίστηκαν επιτυχώς!",
+                lastReset: "Τελευταία Επαναφορά: "
             }
         };
 
@@ -205,6 +226,7 @@
             }
             updateLanguage();
             updateTopicDisplay();
+            updateLastResetTime();
             fetchTweets();
         });
 
@@ -224,10 +246,12 @@
             document.getElementById('setTopicBtn').textContent = lang.setTopic;
             document.getElementById('clearWallBtn').textContent = lang.clearWall;
             document.getElementById('resetCountBtn').textContent = lang.resetCount;
+            document.getElementById('clearAllBtn').textContent = lang.clearAll;
             document.getElementById('footer').textContent = lang.footer;
             
             // Update topic display
             updateTopicDisplay();
+            updateLastResetTime();
             
             // Add/remove Greek font class
             if (currentLanguage === 'el') {
@@ -253,10 +277,11 @@
             const lang = translations[currentLanguage];
             const input = prompt(lang.passwordPrompt);
             if (input === password) {
-                // Use a reset counter instead of timestamp
-                const currentResetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
-                localStorage.setItem('classroomFeedResetCount', currentResetCount + 1);
+                // Store the current timestamp as the reset time
+                const resetTime = new Date().getTime();
+                localStorage.setItem('classroomFeedResetTime', resetTime);
                 showNotification(lang.wallCleared);
+                updateLastResetTime();
                 fetchTweets();
             } else if (input !== null) {
                 showNotification(lang.incorrectPassword, true);
@@ -271,6 +296,23 @@
                 alert(`${lang.resetCountPrompt} ${resetCount} ${lang.times}`);
             } else if (input !== null) {
                 alert(lang.incorrectPassword);
+            }
+        }
+        
+        function clearAllData() {
+            const lang = translations[currentLanguage];
+            const input = prompt(lang.passwordPrompt);
+            if (input === password) {
+                localStorage.removeItem('classroomFeedResetTime');
+                localStorage.removeItem('classroomFeedTopic');
+                localStorage.removeItem('classroomFeedResetCount');
+                localStorage.removeItem('classroomFeedLanguage');
+                showNotification(lang.allDataCleared);
+                updateLastResetTime();
+                updateTopicDisplay();
+                fetchTweets();
+            } else if (input !== null) {
+                showNotification(lang.incorrectPassword, true);
             }
         }
         
@@ -296,10 +338,23 @@
             const savedTopic = localStorage.getItem('classroomFeedTopic');
             topicElement.textContent = lang.topic + (savedTopic || (currentLanguage === 'en' ? "Open Discussion" : "Ανοιχτή Συζήτηση"));
         }
+        
+        function updateLastResetTime() {
+            const lang = translations[currentLanguage];
+            const resetTime = localStorage.getItem('classroomFeedResetTime');
+            const lastResetElement = document.getElementById('lastResetTime');
+            
+            if (resetTime) {
+                const resetDate = new Date(parseInt(resetTime));
+                lastResetElement.textContent = resetDate.toLocaleString();
+            } else {
+                lastResetElement.textContent = lang.lastReset + (currentLanguage === 'en' ? "Never" : "Ποτέ");
+            }
+        }
 
         function fetchTweets() {
             const lang = translations[currentLanguage];
-            const resetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
+            const resetTime = parseInt(localStorage.getItem('classroomFeedResetTime') || '0');
             const urlWithCacheBuster = sheetUrl + '&t=' + new Date().getTime();
             const feedContainer = document.getElementById('feed');
             feedContainer.innerHTML = lang.loading;
@@ -311,24 +366,28 @@
                     const rows = data.split('\n').filter(row => row.trim() !== '').slice(1).reverse();
                     let postCount = 0;
 
-                    // Store the current reset count with each tweet
                     rows.forEach(row => {
                         const columns = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
                         if (columns.length >= 3) {
-                            const timestamp = columns[0].replace(/"/g, '');
+                            const timestampStr = columns[0].replace(/"/g, '');
                             const author = columns[1].replace(/"/g, '');
                             const text = columns[2].replace(/"/g, '');
 
                             if (author && text) {
-                                postCount++;
-                                const tweetElement = document.createElement('div');
-                                tweetElement.className = 'tweet';
-                                tweetElement.setAttribute('data-reset-count', resetCount);
-                                tweetElement.innerHTML = `
-                                    <div class="tweet-author">${author} <span class="tweet-time">${timestamp}</span></div>
-                                    <div class="tweet-text">${text}</div>
-                                `;
-                                feedContainer.appendChild(tweetElement);
+                                // Parse the timestamp from Google Sheets
+                                const timestamp = parseGoogleTimestamp(timestampStr);
+                                
+                                // Only show posts after the reset time
+                                if (timestamp > resetTime) {
+                                    postCount++;
+                                    const tweetElement = document.createElement('div');
+                                    tweetElement.className = 'tweet';
+                                    tweetElement.innerHTML = `
+                                        <div class="tweet-author">${author} <span class="tweet-time">${formatTimestamp(timestamp)}</span></div>
+                                        <div class="tweet-text">${text}</div>
+                                    `;
+                                    feedContainer.appendChild(tweetElement);
+                                }
                             }
                         }
                     });
@@ -341,9 +400,46 @@
                 })
                 .catch(error => {
                     console.error('Error fetching tweets:', error);
-                    feedContainer.innerHTML = 'Could not load posts. Check sheet permissions.';
+                    feedContainer.innerHTML = currentLanguage === 'en' 
+                        ? 'Could not load posts. Check sheet permissions.' 
+                        : 'Δεν ήταν δυνατή η φόρτωση των δημοσιεύσεων. Ελέγξτε τα δικαιώματα του φύλλου.';
                     setTimeout(fetchTweets, 30000);
                 });
+        }
+        
+        // Function to parse Google Sheets timestamp
+        function parseGoogleTimestamp(timestamp) {
+            // Try to parse as ISO format first
+            let date = new Date(timestamp);
+            if (!isNaN(date.getTime())) {
+                return date.getTime();
+            }
+            
+            // Try DD/MM/YYYY format
+            const parts = timestamp.split(/[/ :]/);
+            if (parts.length >= 3) {
+                date = new Date(parts[2], parts[1] - 1, parts[0], parts[3] || 0, parts[4] || 0, parts[5] || 0);
+                if (!isNaN(date.getTime())) {
+                    return date.getTime();
+                }
+            }
+            
+            // Try MM/DD/YYYY format
+            if (parts.length >= 3) {
+                date = new Date(parts[2], parts[0] - 1, parts[1], parts[3] || 0, parts[4] || 0, parts[5] || 0);
+                if (!isNaN(date.getTime())) {
+                    return date.getTime();
+                }
+            }
+            
+            // If all else fails, return current time
+            return new Date().getTime();
+        }
+        
+        // Format timestamp for display
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString();
         }
     </script>
 
