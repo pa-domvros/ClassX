@@ -3,29 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Classroom Feed</title>
+    <title>Our Classroom Feed / Η Τροφοδοσία της Τάξης μας</title>
     <style>
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: #F5EFE6; /* Soft Beige */
-            color: #5D4037; /* Dark Brown Text */
+            background-color: #F5EFE6;
+            color: #5D4037;
             margin: 0; 
             padding: 20px; 
+            transition: all 0.3s ease;
+        }
+        .language-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #DAA520;
+            color: #5D4037;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         h1 { 
             text-align: center; 
-            color: #DAA520; /* Gold */
+            color: #DAA520;
+            margin-top: 40px;
         }
         h2.topic { 
             text-align: center; 
-            color: #8B4513; /* Saddle Brown */
+            color: #8B4513;
             font-style: italic; 
+            min-height: 30px;
         }
         .submit-info { 
             max-width: 600px; 
             margin: 20px auto; 
             padding: 15px; 
-            background-color: #FDF5E6; /* Light Cream/Old Lace */
+            background-color: #FDF5E6;
             border-radius: 10px; 
             text-align: center; 
             box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
@@ -43,9 +59,9 @@
             margin: auto; 
         }
         .tweet { 
-            background-color: #C36241; /* Cinnamon */
-            color: #FDF5E6; /* Light Cream Text */
-            border: 1px solid #A0522D; /* Darker Sienna Border */
+            background-color: #C36241;
+            color: #FDF5E6;
+            border: 1px solid #A0522D;
             border-radius: 10px; 
             padding: 15px; 
             margin-bottom: 10px; 
@@ -54,11 +70,11 @@
         }
         .tweet-author { 
             font-weight: bold; 
-            color: #FFFFFF; /* Brighter Text for Author */
+            color: #FFFFFF;
         }
         .tweet-time { 
             font-size: 0.8em; 
-            color: rgba(253, 245, 230, 0.8); /* Slightly Transparent Cream */
+            color: rgba(253, 245, 230, 0.8);
             margin-left: 10px; 
         }
         .tweet-text { 
@@ -74,60 +90,152 @@
         .teacher-controls button { 
             font-size: 0.9em; 
             margin: 0 5px; 
-            padding: 5px 10px; 
+            padding: 8px 15px; 
             border-radius: 5px; 
-            border: 1px solid #DAA520; /* Gold Border */
-            background-color: #FDF5E6; /* Light Cream Background */
-            color: #8B4513; /* Saddle Brown Text */
+            border: 1px solid #DAA520;
+            background-color: #FDF5E6;
+            color: #8B4513;
             cursor: pointer; 
+            transition: all 0.2s ease;
+        }
+        .teacher-controls button:hover {
+            background-color: #DAA520;
+            color: #FFF;
         }
         footer { 
             text-align: center; 
             margin-top: 50px; 
             padding: 20px; 
             font-size: 0.8em; 
-            color: #6D4C41; /* Brownish Gray */
+            color: #6D4C41; 
         }
         .notification {
             position: fixed;
             top: 20px;
-            right: 20px;
-            padding: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 20px;
             background-color: #4CAF50;
             color: white;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             display: none;
             z-index: 1000;
+        }
+        .greek-text {
+            font-family: 'Segoe UI', Roboto, sans-serif;
         }
     </style>
 </head>
 <body>
 
+    <button class="language-toggle" id="languageToggle">Ελληνικά</button>
     <div class="notification" id="notification"></div>
     
-    <h1>#OurClassFeed 🐦</h1>
+    <h1 id="mainHeading">#OurClassFeed 🐦</h1>
     
     <h2 id="topic" class="topic">Today's Topic: Open Discussion</h2>
 
     <div class="submit-info">
-        <p>Submit a new post using the <a href="https://forms.gle/XUfpuDErFQWycAkH8" target="_blank">Google Form</a> or scan the QR code!</p>
+        <p id="submitText">Submit a new post using the <a href="https://forms.gle/XUfpuDErFQWycAkH8" target="_blank">Google Form</a> or scan the QR code!</p>
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://forms.gle/XUfpuDErFQWycAkH8" alt="QR Code to Google Form">
     </div>
 
-    <div id="feed">Loading tweets...</div>
+    <div id="feed">Loading posts...</div>
 
     <div class="teacher-controls">
-        <button onclick="setTopic()">Set Topic</button>
-        <button onclick="clearWall()">Clear Wall</button>
-        <button onclick="showResetCount()">Show Reset Count</button>
+        <button onclick="setTopic()" id="setTopicBtn">Set Topic</button>
+        <button onclick="clearWall()" id="clearWallBtn">Clear Wall</button>
+        <button onclick="showResetCount()" id="resetCountBtn">Show Reset Count</button>
     </div>
 
-    <footer>✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨</footer>
+    <footer id="footer">✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨</footer>
 
     <script>
+        // Language configuration
+        const translations = {
+            en: {
+                heading: "#OurClassFeed 🐦",
+                topic: "Today's Topic: ",
+                submitText: 'Submit a new post using the <a href="https://forms.gle/XUfpuDErFQWycAkH8" target="_blank">Google Form</a> or scan the QR code!',
+                loading: "Loading posts...",
+                noPosts: "No posts yet. Be the first to post!",
+                setTopic: "Set Topic",
+                clearWall: "Clear Wall",
+                resetCount: "Show Reset Count",
+                footer: "✨✍️ Devised by Panagiotis Domvros, English and Drama Teacher, All Rights Reserved ✍️✨",
+                passwordPrompt: "Please enter the teacher password:",
+                topicPrompt: "Enter the new topic for discussion:",
+                topicUpdated: "Topic updated successfully!",
+                incorrectPassword: "Incorrect password.",
+                wallCleared: "Wall cleared! New posts will now appear.",
+                resetCountPrompt: "The wall has been reset",
+                times: "time(s)"
+            },
+            el: {
+                heading: "#ΗΤάξηΜας 🐦",
+                topic: "Σημερινό Θέμα: ",
+                submitText: 'Υποβάλετε μια νέα δημοσίευση χρησιμοποιώντας την <a href="https://forms.gle/XUfpuDErFQWycAkH8" target="_blank">Φόρμα Google</a> ή σαρώστε τον κωδικό QR!',
+                loading: "Φόρτωση δημοσιεύσεων...",
+                noPosts: "Δεν υπάρχουν ακόμη δημοσιεύσεις. Γίνετε ο πρώτος που θα δημοσιεύσει!",
+                setTopic: "Ορισμός Θέματος",
+                clearWall: "Καθαρισμός Τοίχου",
+                resetCount: "Εμφάνιση Αριθμού Επαναφοράς",
+                footer: "✨✍️ Αναπτύχθηκε από τον Παναγιώτη Δομβρό, Δάσκαλο Αγγλικών και Δράματος, Με την επιφύλαξη παντός δικαιώματος ✍️✨",
+                passwordPrompt: "Παρακαλώ εισάγετε τον κωδικό πρόσβασης του δασκάλου:",
+                topicPrompt: "Εισάγετε το νέο θέμα συζήτησης:",
+                topicUpdated: "Το θέμα ενημερώθηκε με επιτυχία!",
+                incorrectPassword: "Εσφαλμένος κωδικός πρόσβασης.",
+                wallCleared: "Ο τοίχος καθαρίστηκε! Νέες δημοσιεύσεις θα εμφανιστούν τώρα.",
+                resetCountPrompt: "Ο τοίχος έχει επαναφερθεί",
+                times: "φορά/ές"
+            }
+        };
+
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vToRK10STZKifWjqoHr7ASSXWOTL9aV_1aSzUHuTmL9nWoGIyFFNXT47HM8PWqBxarasTytvbd_Qb76/pub?gid=91273334&single=true&output=csv';
         const password = "teacher";
+        let currentLanguage = 'en';
+
+        // Initialize the app
+        window.addEventListener('load', function() {
+            // Check for saved language preference
+            const savedLanguage = localStorage.getItem('classroomFeedLanguage');
+            if (savedLanguage) {
+                currentLanguage = savedLanguage;
+            }
+            updateLanguage();
+            updateTopicDisplay();
+            fetchTweets();
+        });
+
+        // Toggle language
+        document.getElementById('languageToggle').addEventListener('click', function() {
+            currentLanguage = currentLanguage === 'en' ? 'el' : 'en';
+            localStorage.setItem('classroomFeedLanguage', currentLanguage);
+            updateLanguage();
+        });
+
+        // Update all text based on current language
+        function updateLanguage() {
+            const lang = translations[currentLanguage];
+            document.getElementById('languageToggle').textContent = currentLanguage === 'en' ? 'Ελληνικά' : 'English';
+            document.getElementById('mainHeading').textContent = lang.heading;
+            document.getElementById('submitText').innerHTML = lang.submitText;
+            document.getElementById('setTopicBtn').textContent = lang.setTopic;
+            document.getElementById('clearWallBtn').textContent = lang.clearWall;
+            document.getElementById('resetCountBtn').textContent = lang.resetCount;
+            document.getElementById('footer').textContent = lang.footer;
+            
+            // Update topic display
+            updateTopicDisplay();
+            
+            // Add/remove Greek font class
+            if (currentLanguage === 'el') {
+                document.body.classList.add('greek-text');
+            } else {
+                document.body.classList.remove('greek-text');
+            }
+        }
 
         // Show notification function
         function showNotification(message, isError = false) {
@@ -140,62 +248,61 @@
                 notification.style.display = 'none';
             }, 3000);
         }
-
-        window.addEventListener('load', function() {
-            updateTopicDisplay();
-            fetchTweets();
-        });
         
         function clearWall() {
-            const input = prompt("Please enter the teacher password:");
+            const lang = translations[currentLanguage];
+            const input = prompt(lang.passwordPrompt);
             if (input === password) {
                 // Use a reset counter instead of timestamp
                 const currentResetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
                 localStorage.setItem('classroomFeedResetCount', currentResetCount + 1);
-                showNotification("Wall cleared! New posts will now appear.");
+                showNotification(lang.wallCleared);
                 fetchTweets();
             } else if (input !== null) {
-                showNotification("Incorrect password.", true);
+                showNotification(lang.incorrectPassword, true);
             }
         }
         
         function showResetCount() {
-            const input = prompt("Please enter the teacher password:");
+            const lang = translations[currentLanguage];
+            const input = prompt(lang.passwordPrompt);
             if (input === password) {
                 const resetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
-                alert(`The wall has been reset ${resetCount} time(s).`);
+                alert(`${lang.resetCountPrompt} ${resetCount} ${lang.times}`);
             } else if (input !== null) {
-                alert("Incorrect password.");
+                alert(lang.incorrectPassword);
             }
         }
         
         function setTopic() {
-            const input = prompt("Please enter the teacher password:");
+            const lang = translations[currentLanguage];
+            const input = prompt(lang.passwordPrompt);
             if (input === password) {
-                const newTopic = prompt("Enter the new topic for discussion:");
+                const newTopic = prompt(lang.topicPrompt);
                 if (newTopic !== null && newTopic.trim() !== "") {
                     // Save just the custom part of the topic
                     localStorage.setItem('classroomFeedTopic', newTopic);
-                    showNotification("Topic updated successfully!");
+                    showNotification(lang.topicUpdated);
                     updateTopicDisplay();
                 }
             } else if (input !== null) {
-                showNotification("Incorrect password.", true);
+                showNotification(lang.incorrectPassword, true);
             }
         }
 
         function updateTopicDisplay() {
+            const lang = translations[currentLanguage];
             const topicElement = document.getElementById('topic');
             const savedTopic = localStorage.getItem('classroomFeedTopic');
-            // Always prepend "Today's Topic: " to the custom topic
-            topicElement.textContent = "Today's Topic: " + (savedTopic || "Open Discussion");
+            topicElement.textContent = lang.topic + (savedTopic || (currentLanguage === 'en' ? "Open Discussion" : "Ανοιχτή Συζήτηση"));
         }
 
         function fetchTweets() {
+            const lang = translations[currentLanguage];
             const resetCount = parseInt(localStorage.getItem('classroomFeedResetCount') || '0');
             const urlWithCacheBuster = sheetUrl + '&t=' + new Date().getTime();
             const feedContainer = document.getElementById('feed');
-            feedContainer.innerHTML = "Loading tweets...";
+            feedContainer.innerHTML = lang.loading;
 
             fetch(urlWithCacheBuster)
                 .then(response => response.text())
@@ -227,14 +334,14 @@
                     });
 
                     if (postCount === 0) {
-                        feedContainer.innerHTML = 'No tweets yet. Be the first to post!';
+                        feedContainer.innerHTML = lang.noPosts;
                     }
                     
                     setTimeout(fetchTweets, 30000); 
                 })
                 .catch(error => {
                     console.error('Error fetching tweets:', error);
-                    feedContainer.innerHTML = 'Could not load tweets. Check sheet permissions.';
+                    feedContainer.innerHTML = 'Could not load posts. Check sheet permissions.';
                     setTimeout(fetchTweets, 30000);
                 });
         }
